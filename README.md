@@ -18,8 +18,9 @@ CEO Compass analyzes your team's communication patterns to provide actionable in
 # Install dependencies
 pip install -r requirements.txt
 
-# Set OpenAI API key
-export OPENAI_API_KEY="your-api-key-here"
+# Set up environment variables
+cp .env.example .env
+# Edit .env file and add your OpenAI API key
 
 # Run CEO scenarios test
 python main.py

@@ -143,3 +143,6 @@ dmypy.json
 *.log
 temp/
 cache/
+
+# Environment variables
+.env
