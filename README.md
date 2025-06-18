@@ -40,43 +40,6 @@ ceo_compass/
 └── main.py                 # Main entry point
 ```
 
-## 📊 CEO Dashboard Output
-
-```python
-from ceo_compass import CEOCompass
-
-compass = CEOCompass(openai_api_key="your-key")
-
-result = compass.analyze_organization(
-    raw_communication="Your team communication...",
-    communication_type="team_meeting"  # or "leadership_email", "all_hands", "slack_channel"
-)
-
-dashboard = result['ceo_dashboard']
-print(f"Team Health: {dashboard['executive_summary']['overall_team_health']:.2f}")
-print(f"Risk Level: {dashboard['executive_summary']['organizational_risk_level']}")
-```
-
-## 🎯 Key Features
-
-### Leadership Intelligence
-- Communication clarity and effectiveness scoring
-- Team engagement fostering analysis  
-- Decision-making efficiency assessment
-- Psychological safety creation measurement
-
-### Organizational Health
-- Goal clarity and priority consensus tracking
-- Cultural health indicators monitoring
-- Information flow analysis (upward, lateral, downward)
-- Early warning signal detection
-
-### Strategic Recommendations
-- Immediate actions for CEO attention
-- 30-day focus areas for sustained improvement
-- Strategic initiatives for long-term organizational health
-- Success indicators to monitor
-
 ## 🔍 Supported Communication Types
 
 - **Team Meetings**: Sprint planning, standups, retrospectives
@@ -99,7 +62,5 @@ print(f"Risk Level: {dashboard['executive_summary']['organizational_risk_level']
 - **Scaling Startups**: Maintain culture and effectiveness during rapid growth
 - **Remote Teams**: Understand dynamics when you can't observe in person
 - **Leadership Development**: Data-driven feedback on communication effectiveness
-- **Cultural Transformation**: Monitor progress on cultural change initiatives
-- **Board Reporting**: Quantitative insights on organizational health
 
 This system transforms communication data into strategic intelligence, giving CEOs the organizational awareness they need to lead effectively.
