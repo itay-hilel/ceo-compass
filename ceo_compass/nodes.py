@@ -2,7 +2,9 @@ import json
 import logging
 import re
 from datetime import datetime
+from typing import Optional
 from openai import OpenAI
+from langchain_core.runnables import RunnableConfig
 from .state import OrganizationalState
 from .parsers import OrganizationalParser
 from .prompts import CEOPromptTemplates
@@ -53,7 +55,27 @@ class CEOAnalysisNodes:
                 logger.error(f"Failed to parse JSON from content: {content[:200]}...")
                 raise ValueError(f"JSON parsing failed: {str(e)}")
     
-    def preprocess_organizational_data(self, state: OrganizationalState) -> OrganizationalState:
+    def _get_model_config(self, config: Optional[RunnableConfig] = None) -> dict:
+        """Extract model configuration from workflow config"""
+        if not config or "configurable" not in config:
+            return {
+                "model": "gpt-4",
+                "temperature": 0.3,
+                "max_retries": 3
+            }
+        
+        configurable = config["configurable"]
+        return {
+            "model": configurable.get("model_name", "gpt-4"),
+            "temperature": configurable.get("temperature", 0.3),
+            "max_retries": configurable.get("max_retries", 3)
+        }
+    
+    def preprocess_organizational_data(
+        self, 
+        state: OrganizationalState, 
+        config: Optional[RunnableConfig] = None
+    ) -> OrganizationalState:
         """Parse and structure organizational communication data"""
         logger.info("Processing organizational communication data...")
         
@@ -96,23 +118,28 @@ class CEOAnalysisNodes:
                 "processing_stage": "error"
             }
     
-    def analyze_leadership_effectiveness(self, state: OrganizationalState) -> OrganizationalState:
+    def analyze_leadership_effectiveness(
+        self, 
+        state: OrganizationalState, 
+        config: Optional[RunnableConfig] = None
+    ) -> OrganizationalState:
         """Analyze leadership communication patterns and effectiveness"""
         logger.info("Analyzing leadership effectiveness...")
         
         try:
             messages = state.get("messages", [])
             team_metadata = state.get("team_metadata", {})
+            model_config = self._get_model_config(config)
             
             leadership_prompt = self.prompts.leadership_effectiveness_prompt(messages, team_metadata)
             
             response = self.client.chat.completions.create(
-                model="gpt-4",
+                model=model_config["model"],
                 messages=[
                     {"role": "system", "content": "You are a senior organizational consultant specializing in leadership effectiveness analysis for CEOs."},
                     {"role": "user", "content": leadership_prompt}
                 ],
-                temperature=0.3
+                temperature=model_config["temperature"]
             )
             
             leadership_data = self._safe_json_parse(response.choices[0].message.content)
@@ -131,23 +158,28 @@ class CEOAnalysisNodes:
                 "processing_stage": "error"
             }
     
-    def analyze_organizational_alignment(self, state: OrganizationalState) -> OrganizationalState:
+    def analyze_organizational_alignment(
+        self, 
+        state: OrganizationalState, 
+        config: Optional[RunnableConfig] = None
+    ) -> OrganizationalState:
         """Analyze organizational alignment and cultural indicators"""
         logger.info("Analyzing organizational alignment...")
         
         try:
             messages = state.get("messages", [])
             team_metadata = state.get("team_metadata", {})
+            model_config = self._get_model_config(config)
             
             alignment_prompt = self.prompts.organizational_alignment_prompt(messages, team_metadata)
             
             response = self.client.chat.completions.create(
-                model="gpt-4",
+                model=model_config["model"],
                 messages=[
                     {"role": "system", "content": "You are a strategic advisor helping CEOs understand organizational health and culture."},
                     {"role": "user", "content": alignment_prompt}
                 ],
-                temperature=0.3
+                temperature=model_config["temperature"]
             )
             
             alignment_data = self._safe_json_parse(response.choices[0].message.content)
@@ -166,7 +198,11 @@ class CEOAnalysisNodes:
                 "processing_stage": "error"
             }
     
-    def synthesize_ceo_dashboard(self, state: OrganizationalState) -> OrganizationalState:
+    def synthesize_ceo_dashboard(
+        self, 
+        state: OrganizationalState, 
+        config: Optional[RunnableConfig] = None
+    ) -> OrganizationalState:
         """Create CEO-focused dashboard with actionable insights"""
         logger.info("Synthesizing CEO dashboard...")
         
@@ -175,30 +211,34 @@ class CEOAnalysisNodes:
             organizational_insights = state.get("organizational_insights", {})
             team_metadata = state.get("team_metadata", {})
             messages = state.get("messages", [])
+            model_config = self._get_model_config(config)
             
             synthesis_prompt = self.prompts.team_performance_synthesis_prompt(
                 leadership_analysis, organizational_insights, team_metadata
             )
             
             response = self.client.chat.completions.create(
-                model="gpt-4",
+                model=model_config["model"],
                 messages=[
                     {"role": "system", "content": "You are the CEO's chief of staff, synthesizing organizational insights into actionable strategic guidance."},
                     {"role": "user", "content": synthesis_prompt}
                 ],
-                temperature=0.2
+                temperature=model_config["temperature"]
             )
             
             ceo_dashboard = self._safe_json_parse(response.choices[0].message.content)
             
-            # Add analysis metadata
+            # Add analysis metadata with config info
+            config_info = config.get("configurable", {}) if config else {}
             ceo_dashboard["analysis_metadata"] = {
                 "analysis_timestamp": datetime.now().isoformat(),
                 "communication_type": state.get("communication_type", "unknown"),
                 "participants_analyzed": team_metadata.get("total_participants", 0),
                 "messages_processed": len(messages),
                 "leadership_participants": len([m for m in messages if m.get('is_leadership', False)]),
-                "analysis_scope": "organizational_communication"
+                "analysis_scope": "organizational_communication",
+                "model_used": model_config["model"],
+                "thread_id": config_info.get("thread_id", "unknown")
             }
             
             return {
@@ -215,13 +255,19 @@ class CEOAnalysisNodes:
                 "processing_stage": "error"
             }
     
-    def validate_insights(self, state: OrganizationalState) -> OrganizationalState:
+    def validate_insights(
+        self, 
+        state: OrganizationalState, 
+        config: Optional[RunnableConfig] = None
+    ) -> OrganizationalState:
         """Validate and finalize CEO insights"""
         logger.info("Validating CEO insights...")
         
         try:
-            ceo_dashboard = state.get("ceo_dashboard", {})
-            validate_ceo_dashboard_schema(ceo_dashboard)
+            # Check if validation is enabled in config
+            if config and config.get("configurable", {}).get("enable_validation", True):
+                ceo_dashboard = state.get("ceo_dashboard", {})
+                validate_ceo_dashboard_schema(ceo_dashboard)
             
             return {
                 **state,

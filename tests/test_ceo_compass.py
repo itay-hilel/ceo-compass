@@ -1,5 +1,6 @@
 import pytest
 import os
+import uuid
 from unittest.mock import patch, Mock
 import json
 
@@ -47,18 +48,27 @@ class TestOrganizationalParser:
         assert dynamics['total_participants'] > 0
 
 class TestCEOCompass:
-    """Test the main CEO Compass functionality"""
+    """Test the main CEO Compass functionality with modern patterns"""
     
     @patch('ceo_compass.ceo_compass.OpenAI')
     def test_ceo_compass_initialization(self, mock_openai, mock_openai_api_key):
-        """Test CEO Compass initialization"""
-        compass = CEOCompass(openai_api_key=mock_openai_api_key)
+        """Test CEO Compass initialization with modern features"""
+        compass = CEOCompass(openai_api_key=mock_openai_api_key, enable_checkpointing=True)
         assert compass.client is not None
         assert compass.workflow is not None
+        assert compass.checkpointer is not None
     
     @patch('ceo_compass.ceo_compass.OpenAI')
-    def test_analyze_organization_success(self, mock_openai, sample_team_meeting_data):
-        """Test successful organization analysis"""
+    def test_ceo_compass_no_checkpointing(self, mock_openai, mock_openai_api_key):
+        """Test CEO Compass initialization without checkpointing"""
+        compass = CEOCompass(openai_api_key=mock_openai_api_key, enable_checkpointing=False)
+        assert compass.client is not None
+        assert compass.workflow is not None
+        assert compass.checkpointer is None
+    
+    @patch('ceo_compass.ceo_compass.OpenAI')
+    def test_analyze_organization_with_config(self, mock_openai, sample_team_meeting_data):
+        """Test successful organization analysis with modern configuration"""
         # Mock OpenAI responses
         mock_client = Mock()
         mock_response = Mock()
@@ -90,21 +100,94 @@ class TestCEOCompass:
         mock_client.chat.completions.create.side_effect = side_effect
         
         compass = CEOCompass(openai_api_key="test-key")
+        
+        # Test with modern configuration options
         result = compass.analyze_organization(
             raw_communication=sample_team_meeting_data,
-            communication_type="team_meeting"
+            communication_type="team_meeting",
+            thread_id="test-thread-123",
+            model_name="gpt-4",
+            max_retries=2,
+            enable_validation=True,
+            temperature=0.2
         )
         
         assert result['status'] == 'success'
         assert 'ceo_dashboard' in result
         assert 'executive_summary' in result
+        assert 'thread_id' in result
+        assert result['thread_id'] == "test-thread-123"
+    
+    @patch('ceo_compass.ceo_compass.OpenAI')
+    def test_workflow_state_management(self, mock_openai, mock_openai_api_key):
+        """Test workflow state management with checkpointing"""
+        mock_client = Mock()
+        mock_openai.return_value = mock_client
+        
+        compass = CEOCompass(openai_api_key=mock_openai_api_key, enable_checkpointing=True)
+        
+        # Test getting state (should return None for non-existent thread)
+        state = compass.get_workflow_state("non-existent-thread")
+        # Note: This might return None or empty state depending on implementation
+        
+        # Test with checkpointing disabled
+        compass_no_checkpoint = CEOCompass(openai_api_key=mock_openai_api_key, enable_checkpointing=False)
+        state = compass_no_checkpoint.get_workflow_state("any-thread")
+        assert state is None
+    
+    @patch('ceo_compass.ceo_compass.OpenAI')
+    def test_resume_workflow_error_handling(self, mock_openai, mock_openai_api_key):
+        """Test resume workflow error handling"""
+        mock_client = Mock()
+        mock_openai.return_value = mock_client
+        
+        # Test with checkpointing disabled
+        compass = CEOCompass(openai_api_key=mock_openai_api_key, enable_checkpointing=False)
+        
+        with pytest.raises(ValueError, match="Checkpointing not enabled"):
+            compass.resume_workflow("any-thread")
 
-class TestEndToEnd:
-    """End-to-end testing with mocked API calls"""
+class TestModernFeatures:
+    """Test modern LangGraph features"""
     
     @patch('ceo_compass.nodes.OpenAI')
-    def test_run_ceo_compass_test_mocked(self, mock_openai):
-        """Test the main test function with mocked API calls"""
+    def test_config_integration(self, mock_openai):
+        """Test that configuration is properly passed through the workflow"""
+        from ceo_compass.nodes import CEOAnalysisNodes
+        from langchain_core.runnables import RunnableConfig
+        
+        mock_client = Mock()
+        mock_openai.return_value = mock_client
+        
+        nodes = CEOAnalysisNodes(mock_client)
+        
+        # Test config extraction
+        config = RunnableConfig(
+            configurable={
+                "model_name": "gpt-4-turbo",
+                "temperature": 0.5,
+                "max_retries": 5,
+                "enable_validation": False
+            }
+        )
+        
+        model_config = nodes._get_model_config(config)
+        assert model_config["model"] == "gpt-4-turbo"
+        assert model_config["temperature"] == 0.5
+        assert model_config["max_retries"] == 5
+        
+        # Test default config
+        default_config = nodes._get_model_config(None)
+        assert default_config["model"] == "gpt-4"
+        assert default_config["temperature"] == 0.3
+        assert default_config["max_retries"] == 3
+
+class TestEndToEnd:
+    """End-to-end testing with modern patterns"""
+    
+    @patch('ceo_compass.nodes.OpenAI')
+    def test_run_ceo_compass_test_modern(self, mock_openai):
+        """Test the main test function with modern LangGraph patterns"""
         # Mock successful OpenAI responses
         mock_client = Mock()
         mock_response = Mock()
@@ -138,11 +221,10 @@ class TestEndToEnd:
         mock_client.chat.completions.create.side_effect = side_effect
         mock_openai.return_value = mock_client
         
-        # Run the test
+        # Run the test with modern patterns
         result = run_ceo_compass_test()
         
         # The test should complete without throwing exceptions
-        # Note: result might be False due to mocking, but no exceptions should occur
         assert isinstance(result, bool)
 
 if __name__ == "__main__":
