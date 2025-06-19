@@ -1,16 +1,34 @@
-# CEO Compass - Personalized Organizational Intelligence
+# CEO Compass - Communication Health Analysis via LangGraph
 
-AI-powered communication analysis that adapts to **your** leadership style and gives you strategic insights tailored to your specific needs as a CEO.
+**LangGraph-powered** communication analysis that processes message threads and meeting transcripts to deliver structured "communication health" breakdowns using OpenAI LLM integration.
 
-## 🎯 What Makes CEO Compass Different
+## 🧪 Assignment Implementation
 
-CEO Compass doesn't give generic advice - it learns your leadership style, company stage, and focus areas to provide **personalized organizational intelligence**:
+This project fulfills a take-home assignment to build a communication analysis system using:
+- ✅ **LangGraph** for multi-node workflow orchestration
+- ✅ **OpenAI LLM** integration for intelligent analysis
+- ✅ **Structured JSON output** with communication health breakdowns
+- ✅ **Reasoning explanations** for analysis results
 
-- **🎨 Personalized Analysis**: Analysis customized for your leadership style (collaborative, directive, coaching, strategic)
-- **🏢 Company Stage Aware**: Different insights for startup, growth, and enterprise-stage companies  
-- **🎯 Focus Area Alignment**: Emphasizes what matters most to you (execution, culture, team health, innovation)
-- **📝 Custom Prompts**: Replace our templates with your own analysis frameworks
-- **🤖 Leadership Adaptation**: AI adapts tone and recommendations to your intervention preferences
+## 🎯 Communication Health Model
+
+The system defines "communication health" through multiple analytical dimensions:
+
+- **👑 Leadership Effectiveness**: Quality of leadership communication patterns in message threads
+- **🎯 Organizational Alignment**: Team coordination patterns extracted from meeting transcripts  
+- **💪 Cultural Health**: Cultural indicators derived from communication tone and content
+- **⚠️ Risk Detection**: Early warning signals of communication breakdown
+- **📊 Engagement Patterns**: Participation levels and communication flow analysis
+
+## 🏗 LangGraph Workflow Structure
+
+The analysis uses a **multi-node LangGraph workflow** that processes communication data through specialized stages:
+
+```
+Input (Messages/Transcripts) → Preprocessing → Leadership Analysis → Team Health Analysis → Risk Detection → Summary & Output
+```
+
+Each node uses targeted OpenAI prompts optimized for specific aspects of communication health analysis.
 
 ## 💡 CEO Personas Supported
 
@@ -48,15 +66,47 @@ pip install -r requirements.txt
 # Set up environment variables  
 export OPENAI_API_KEY="your-openai-api-key"
 
-# Quick test with your CEO style
+# Run the communication health analysis
+python main.py
+
+# Analyze specific communication data
 python -c "
-from ceo_compass import create_startup_ceo_compass
-compass = create_startup_ceo_compass('your-api-key', 'Your Name', 'Your Company')
-compass.demonstrate_customization()
+from ceo_compass import CEOCompass
+compass = CEOCompass('your-api-key')
+result = compass.analyze_communication_health({
+    'messages': ['Email thread data'],
+    'meeting_transcripts': ['Meeting transcript data']
+})
+print(result)
 "
 
 # Run comprehensive CEO persona tests
 python -m ceo_compass.test_scenarios
+```
+
+## 📊 Structured Output Example
+
+The workflow produces structured JSON with reasoning:
+
+```json
+{
+  "communication_health_score": 7.2,
+  "analysis_breakdown": {
+    "leadership_effectiveness": {
+      "score": 8.1,
+      "key_findings": ["Clear decision communication", "Consistent messaging"]
+    },
+    "team_alignment": {
+      "score": 6.8,
+      "alignment_indicators": ["Shared goals mentioned frequently"]
+    },
+    "cultural_health": {
+      "score": 7.5,
+      "positive_indicators": ["Collaborative language", "Growth mindset"]
+    }
+  },
+  "reasoning_explanation": "Analysis based on communication patterns showing strong leadership clarity but emerging team alignment challenges."
+}
 ```
 
 ## 🎯 Core Intelligence Features
@@ -114,7 +164,7 @@ ceo_compass/
 └── test_scenarios.py       # 🎭 CEO persona test scenarios
 ```
 
-**Key Innovation**: Every component adapts to your CEO profile and preferences.
+**Key Innovation**: LangGraph workflow orchestrates specialized analysis nodes, each using targeted OpenAI prompts for different aspects of communication health assessment.
 
 ## 📈 Your Personalized CEO Value
 
